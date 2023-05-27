@@ -1,0 +1,136 @@
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <omp.h>
+
+using namespace std;
+
+// Function to generate a sequence of random numbers
+void generateRandomSequence(int arr[], int size) {
+    srand(time(0));
+    for (int i = 0; i < size; i++) {
+        arr[i] = rand() % 1000;  // Generate random numbers between 0 and 999
+    }
+}
+
+// Function to print an array
+void printArray(int arr[], int size) {
+    for (int i = 0; i < size; i++) {
+        cout << arr[i] << " ";
+    }
+    cout << endl;
+}
+
+// Function to perform bubble sort in parallel using OpenMP
+void parallelBubbleSort(int arr[], int size) {
+    #pragma omp parallel
+    {
+        #pragma omp for
+        for (int i = 0; i < size - 1; i++) {
+            for (int j = 0; j < size - i - 1; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    swap(arr[j], arr[j + 1]);
+                }
+            }
+        }
+    }
+}
+
+// Function to merge two sorted subarrays
+void merge(int arr[], int left, int middle, int right) {
+    int leftSize = middle - left + 1;
+    int rightSize = right - middle;
+
+    int* leftArr = new int[leftSize];
+    int* rightArr = new int[rightSize];
+
+    // Copy data to temporary arrays
+    for (int i = 0; i < leftSize; i++) {
+        leftArr[i] = arr[left + i];
+    }
+    for (int i = 0; i < rightSize; i++) {
+        rightArr[i] = arr[middle + 1 + i];
+    }
+
+    int i = 0, j = 0, k = left;
+
+    // Merge the temporary arrays back into the original array
+    while (i < leftSize && j < rightSize) {
+        if (leftArr[i] <= rightArr[j]) {
+            arr[k] = leftArr[i];
+            i++;
+        }
+        else {
+            arr[k] = rightArr[j];
+            j++;
+        }
+        k++;
+    }
+
+    // Copy the remaining elements of leftArr, if any
+    while (i < leftSize) {
+        arr[k] = leftArr[i];
+        i++;
+        k++;
+    }
+
+    // Copy the remaining elements of rightArr, if any
+    while (j < rightSize) {
+        arr[k] = rightArr[j];
+        j++;
+        k++;
+    }
+
+    delete[] leftArr;
+    delete[] rightArr;
+}
+
+// Function to perform merge sort in parallel using OpenMP
+void parallelMergeSort(int arr[], int left, int right) {
+    if (left < right) {
+        int middle = left + (right - left) / 2;
+
+        #pragma omp parallel sections
+        {
+            #pragma omp section
+            {
+                parallelMergeSort(arr, left, middle);
+            }
+            #pragma omp section
+            {
+                parallelMergeSort(arr, middle + 1, right);
+            }
+        }
+
+        merge(arr, left, middle, right);
+    }
+}
+
+int main() {
+    const int SIZE = 1000;
+    int arr[SIZE];
+
+    // Generate random sequence
+    generateRandomSequence(arr, SIZE);
+
+    cout << "Original sequence: ";
+    printArray(arr, SIZE);
+
+    // Perform parallel bubble sort
+    parallelBubbleSort(arr, SIZE);
+    cout << "Sequence after parallel bubble sort: ";
+    printArray(arr, SIZE);
+
+    // Generate new random sequence
+    generateRandomSequence(arr, SIZE);
+
+    cout << "Original sequence: ";
+    printArray(arr, SIZE);
+
+    // Perform parallel merge sort
+    parallelMergeSort(arr, 0, SIZE - 1);
+    cout << "Sequence after parallel merge sort: ";
+    printArray(arr, SIZE);
+
+    return 0;
+}
