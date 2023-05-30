@@ -1,0 +1,72 @@
+#include <iostream>
+#include <queue>
+#include <vector>
+#include <omp.h>
+#include <chrono>
+using namespace std;
+
+// Function to perform BFS traversal in parallel
+void bfs_parallel(vector<vector<int>>& graph, int start_node) {
+    queue<int> queue;
+    vector<bool> visited(graph.size(), false);
+
+    visited[start_node] = true;
+    queue.push(start_node);
+
+    while (!queue.empty()) {
+        #pragma omp parallel
+        {
+            #pragma omp for
+            for (int i = 0; i < queue.size(); ++i) {
+                int current_node;
+                #pragma omp critical
+                {
+                    current_node = queue.front();
+                    queue.pop();
+                }
+
+                cout << "Visiting node: " << current_node << endl;
+
+                // Process neighbors of current_node in parallel
+                #pragma omp for
+                for (int neighbor : graph[current_node]) {
+                    if (!visited[neighbor]) {
+                        #pragma omp critical
+                        {
+                            visited[neighbor] = true;
+                            queue.push(neighbor);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    // Example graph represented as an adjacency list
+    vector<vector<int>> graph = {
+        {1, 2},     // Node 0
+        {0, 2, 3},  // Node 1
+        {0, 1, 4},  // Node 2
+        {1, 4, 5},  // Node 3
+        {2, 3, 6},  // Node 4
+        {3},        // Node 5
+        {4}         // Node 6
+    };
+
+    int start_node = 0;
+
+    // Measure the time complexity of BFS parallel traversal
+    auto start = chrono::high_resolution_clock::now();
+    bfs_parallel(graph, start_node);
+    auto end = chrono::high_resolution_clock::now();
+
+    // Calculate the elapsed time
+    chrono::duration<double, milli> duration = end - start;
+
+    // Print the elapsed time
+    cout << endl << "Time taken: " << duration.count() << " milliseconds" << endl;
+
+    return 0;
+}
