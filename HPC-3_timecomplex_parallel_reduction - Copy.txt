@@ -1,0 +1,90 @@
+#include <iostream>
+#include <vector>
+#include <omp.h>
+#include <climits>
+#include <chrono>
+
+using namespace std;
+
+void min_reduction(vector<int>& arr) {
+    int min_value = INT_MAX;
+
+    auto start = chrono::high_resolution_clock::now();
+
+    #pragma omp parallel for reduction(min: min_value)
+    for (int i = 0; i < arr.size(); i++) {
+        if (arr[i] < min_value) {
+            min_value = arr[i];
+        }
+    }
+
+    auto end = chrono::high_resolution_clock::now();
+    chrono::duration<double, milli> duration = end - start;
+
+    cout << "Minimum value: " << min_value << endl;
+    cout << "Execution time of min reduction: " << duration.count() << " milliseconds" << endl;
+}
+
+void max_reduction(vector<int>& arr) {
+    int max_value = INT_MIN;
+
+    auto start = chrono::high_resolution_clock::now();
+
+    #pragma omp parallel for reduction(max: max_value)
+    for (int i = 0; i < arr.size(); i++) {
+        if (arr[i] > max_value) {
+            max_value = arr[i];
+        }
+    }
+
+    auto end = chrono::high_resolution_clock::now();
+    chrono::duration<double, milli> duration = end - start;
+
+    cout << "Maximum value: " << max_value << endl;
+    cout << "Execution time of max reduction: " << duration.count() << " milliseconds" << endl;
+}
+
+void sum_reduction(vector<int>& arr) {
+    int sum = 0;
+
+    auto start = chrono::high_resolution_clock::now();
+
+    #pragma omp parallel for reduction(+: sum)
+    for (int i = 0; i < arr.size(); i++) {
+        sum += arr[i];
+    }
+
+    auto end = chrono::high_resolution_clock::now();
+    chrono::duration<double, milli> duration = end - start;
+
+    cout << "Sum: " << sum << endl;
+    cout << "Execution time of sum reduction: " << duration.count() << " milliseconds" << endl;
+}
+
+void average_reduction(vector<int>& arr) {
+    int sum = 0;
+
+    auto start = chrono::high_resolution_clock::now();
+
+    #pragma omp parallel for reduction(+: sum)
+    for (int i = 0; i < arr.size(); i++) {
+        sum += arr[i];
+    }
+
+    auto end = chrono::high_resolution_clock::now();
+    chrono::duration<double, milli> duration = end - start;
+
+    cout << "Average: " << (double)sum / arr.size() << endl;
+    cout << "Execution time of average reduction: " << duration.count() << " milliseconds" << endl;
+}
+
+int main() {
+    vector<int> arr = {5, 2, 9, 1, 7, 6, 8, 3, 4};
+
+    min_reduction(arr);
+    max_reduction(arr);
+    sum_reduction(arr);
+    average_reduction(arr);
+
+    return 0;
+}
